@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useConfigStore } from "@/stores/config";
 import type { Config } from "@/types";
 
@@ -17,6 +17,8 @@ const config = ref<Config>({
   anti_snipe_messages: [],
   kill_patterns: [],
   kill_messages: [],
+  message_prefix: "",
+  killsay_format: "{prefix}{message}",
 });
 
 // Toast状态
@@ -38,6 +40,7 @@ const tabs = [
   { id: "messages", label: "反狙击消息" },
   { id: "killPatterns", label: "击杀检测模式" },
   { id: "killMessages", label: "击杀消息" },
+  { id: "format", label: "消息格式" },
 ];
 
 // 显示Toast
@@ -49,6 +52,20 @@ function showToastMessage(message: string, type: "success" | "error" = "success"
     showToast.value = false;
   }, 2000);
 }
+
+// 格式预览
+const formatPreview = computed(() => {
+  const format = config.value.killsay_format || "{prefix}{message}";
+  const prefix = config.value.message_prefix || "";
+  const sampleMessage = "十步杀一人，千里不留行。";
+  
+  return format
+    .replace("{prefix}", prefix)
+    .replace("{message}", sampleMessage)
+    .replace("{k}", "Player")
+    .replace("{d}", "Enemy")
+    .replace("{kills}", "5");
+});
 
 // 加载配置
 onMounted(() => {
@@ -177,6 +194,43 @@ async function saveConfig() {
             如果没有占位符，则发送原消息
           </p>
         </div>
+        
+        <!-- 消息格式 -->
+        <div v-if="activeTab === 'format'" class="tab-pane">
+          <div class="format-section">
+            <label class="dg-label">消息前缀</label>
+            <input
+              v-model="config.message_prefix"
+              class="dg-input"
+              placeholder="例如: [KILLSAY]"
+            />
+            <p class="help-text">发送消息前添加的前缀文本</p>
+          </div>
+          
+          <div class="format-section">
+            <label class="dg-label">消息格式模板</label>
+            <input
+              v-model="config.killsay_format"
+              class="dg-input"
+              placeholder="{prefix}{message}"
+            />
+            <p class="help-text">
+              可用占位符:<br/>
+              {prefix} - 消息前缀<br/>
+              {message} - 格式化后的击杀消息<br/>
+              {k} - 击杀者名称<br/>
+              {d} - 被击杀者名称<br/>
+              {kills} - 当前击杀数
+            </p>
+          </div>
+          
+          <div class="format-preview">
+            <label class="dg-label">预览效果</label>
+            <div class="preview-box">
+              {{ formatPreview }}
+            </div>
+          </div>
+        </div>
       </div>
       
       <!-- 操作按钮 -->
@@ -270,6 +324,25 @@ async function saveConfig() {
   font-size: 12px;
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+/* 格式设置 */
+.format-section {
+  margin-bottom: var(--spacing-md);
+}
+
+.format-preview {
+  margin-top: var(--spacing-md);
+}
+
+.preview-box {
+  padding: var(--spacing-sm);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-small);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent-yellow);
+  word-break: break-all;
 }
 
 /* 操作按钮 */

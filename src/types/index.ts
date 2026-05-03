@@ -5,6 +5,8 @@ export interface Config {
   anti_snipe_messages: string[];
   kill_patterns: string[];
   kill_messages: string[];
+  message_prefix: string;
+  killsay_format: string;
 }
 
 export interface ConfigInfo {
@@ -44,6 +46,8 @@ export interface MonitorParams {
   kill_patterns: string[];
   kill_messages: string[];
   anti_snipe_enabled: boolean;
+  message_prefix: string;
+  killsay_format: string;
 }
 
 export interface MonitorStatus {

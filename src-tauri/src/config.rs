@@ -9,6 +9,14 @@ pub struct Config {
     pub anti_snipe_messages: Vec<String>,
     pub kill_patterns: Vec<String>,
     pub kill_messages: Vec<String>,
+    #[serde(default)]
+    pub message_prefix: String,
+    #[serde(default = "default_killsay_format")]
+    pub killsay_format: String,
+}
+
+fn default_killsay_format() -> String {
+    "{prefix}{message}".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,6 +79,8 @@ impl Default for Config {
                 "谈笑间，樯橹灰飞烟灭。".to_string(),
                 "金戈铁马，气吞万里如虎。".to_string(),
             ],
+            message_prefix: String::new(),
+            killsay_format: "{prefix}{message}".to_string(),
         }
     }
 }

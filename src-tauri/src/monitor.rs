@@ -18,6 +18,14 @@ pub struct MonitorParams {
     pub kill_patterns: Vec<String>,
     pub kill_messages: Vec<String>,
     pub anti_snipe_enabled: bool,
+    #[serde(default)]
+    pub message_prefix: String,
+    #[serde(default = "default_killsay_format")]
+    pub killsay_format: String,
+}
+
+fn default_killsay_format() -> String {
+    "{prefix}{message}".to_string()
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -179,6 +187,8 @@ fn monitor_loop(
                             &params.kill_messages,
                             &kills,
                             &deaths,
+                            &params.message_prefix,
+                            &params.killsay_format,
                             &event_sender,
                         );
                         
@@ -220,6 +230,8 @@ fn process_kill(
     kill_messages: &[String],
     kills: &Arc<Mutex<u32>>,
     deaths: &Arc<Mutex<u32>>,
+    message_prefix: &str,
+    killsay_format: &str,
     event_sender: &impl Fn(MonitorEvent),
 ) {
     for (regex, o_idx, u_idx) in kill_regexes {
@@ -239,7 +251,7 @@ fn process_kill(
                     *kills_count += 1;
                     
                     let message = get_random_kill_message(kill_messages);
-                    let formatted = format_message(&message, &k, &d);
+                    let formatted = format_message(&message, &k, &d, *kills_count, message_prefix, killsay_format);
                     
                     event_sender(MonitorEvent::Kill {
                         killer: k,
@@ -313,8 +325,15 @@ fn get_random_kill_message(messages: &[String]) -> String {
     messages[index].clone()
 }
 
-fn format_message(template: &str, killer: &str, victim: &str) -> String {
-    template
+fn format_message(template: &str, killer: &str, victim: &str, kills: u32, prefix: &str, format: &str) -> String {
+    let message = template
+        .replace("%u", killer)
+        .replace("%o", victim);
+    
+    format
+        .replace("{prefix}", prefix)
+        .replace("{message}", &message)
         .replace("{k}", killer)
         .replace("{d}", victim)
+        .replace("{kills}", &kills.to_string())
 }
