@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from "vue";
 import { useMonitorStore } from "@/stores/monitor";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const monitorStore = useMonitorStore();
 
@@ -16,30 +17,40 @@ onMounted(() => {
 onUnmounted(() => {
   monitorStore.cleanup();
 });
+
+async function closeWindow() {
+  await getCurrentWindow().hide();
+}
 </script>
 
 <template>
-  <div class="stats-overlay">
-    <div class="stats-container">
-      <div class="stat-item kills">
+  <div class="stats-overlay" data-tauri-drag-region>
+    <div class="stats-container" data-tauri-drag-region>
+      <div class="stat-item kills" data-tauri-drag-region>
         <span class="stat-value">{{ monitorStore.kills }}</span>
         <span class="stat-label">击杀</span>
       </div>
       
       <div class="stat-divider"></div>
       
-      <div class="stat-item deaths">
+      <div class="stat-item deaths" data-tauri-drag-region>
         <span class="stat-value">{{ monitorStore.deaths }}</span>
         <span class="stat-label">死亡</span>
       </div>
       
       <div class="stat-divider"></div>
       
-      <div class="stat-item kdr">
+      <div class="stat-item kdr" data-tauri-drag-region>
         <span class="stat-value">{{ kdr }}</span>
         <span class="stat-label">K/D</span>
       </div>
     </div>
+    
+    <button class="close-btn" @click="closeWindow" title="关闭">
+      <svg width="10" height="10" viewBox="0 0 12 12">
+        <path d="M1 1L11 11M1 11L11 1" stroke="currentColor" stroke-width="1.5" />
+      </svg>
+    </button>
     
     <div class="status-dot" :class="{ active: monitorStore.isRunning }"></div>
   </div>
@@ -56,19 +67,7 @@ onUnmounted(() => {
   border: 1px solid rgba(249, 211, 66, 0.3);
   border-radius: 8px;
   position: relative;
-}
-
-.stats-loading {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1A1D22;
-  border: 1px solid rgba(249, 211, 66, 0.3);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
+  user-select: none;
 }
 
 .stats-container {
@@ -118,10 +117,32 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.15);
 }
 
+.close-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.close-btn:hover {
+  background: rgba(239, 68, 68, 0.5);
+  color: white;
+}
+
 .status-dot {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
