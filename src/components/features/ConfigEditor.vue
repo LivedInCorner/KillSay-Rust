@@ -55,16 +55,16 @@ function showToastMessage(message: string, type: "success" | "error" = "success"
 
 // 格式预览
 const formatPreview = computed(() => {
-  const format = config.value.killsay_format || "{prefix}{message}";
+  const format = config.value.killsay_format || "%t%m";
   const prefix = config.value.message_prefix || "";
   const sampleMessage = "十步杀一人，千里不留行。";
   
   return format
-    .replace("{prefix}", prefix)
-    .replace("{message}", sampleMessage)
-    .replace("{k}", "Player")
-    .replace("{d}", "Enemy")
-    .replace("{kills}", "5");
+    .replace("%t", prefix)
+    .replace("%m", sampleMessage)
+    .replace("%u", "Player")
+    .replace("%o", "Enemy")
+    .replace("%c", "5");
 });
 
 // 加载配置
@@ -212,15 +212,15 @@ async function saveConfig() {
             <input
               v-model="config.killsay_format"
               class="dg-input"
-              placeholder="{prefix}{message}"
+              placeholder="%t%m"
             />
             <p class="help-text">
               可用占位符:<br/>
-              {prefix} - 消息前缀<br/>
-              {message} - 格式化后的击杀消息<br/>
-              {k} - 击杀者名称<br/>
-              {d} - 被击杀者名称<br/>
-              {kills} - 当前击杀数
+              %t - 前缀<br/>
+              %m - 击杀消息<br/>
+              %u - 用户(击杀者)<br/>
+              %o - 对象(被击杀者)<br/>
+              %c - 击杀数
             </p>
           </div>
           

@@ -16,7 +16,7 @@ pub struct Config {
 }
 
 fn default_killsay_format() -> String {
-    "{prefix}{message}".to_string()
+    "%t%m".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,7 +51,8 @@ pub struct AppSettings {
     pub path_history: PathHistory,
 }
 
-impl Default for Config {
+    
+    impl Default for Config {
     fn default() -> Self {
         Self {
             sniper_list: vec!["".to_string()],
@@ -80,7 +81,7 @@ impl Default for Config {
                 "金戈铁马，气吞万里如虎。".to_string(),
             ],
             message_prefix: String::new(),
-            killsay_format: "{prefix}{message}".to_string(),
+            killsay_format: "%t%m".to_string(),
         }
     }
 }

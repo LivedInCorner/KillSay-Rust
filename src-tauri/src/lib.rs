@@ -14,12 +14,6 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            // 设置窗口图标
-            let window = app.get_webview_window("main").unwrap();
-            let icon_bytes = include_bytes!("../icons/icon.ico");
-            let icon = tauri::image::Image::new_owned(icon_bytes.to_vec(), 32, 32);
-            let _ = window.set_icon(icon);
-            
             // 初始化配置管理器
             let config_dir = app
                 .path()

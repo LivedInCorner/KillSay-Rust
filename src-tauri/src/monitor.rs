@@ -25,7 +25,7 @@ pub struct MonitorParams {
 }
 
 fn default_killsay_format() -> String {
-    "{prefix}{message}".to_string()
+    "%t%m".to_string()
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -331,9 +331,9 @@ fn format_message(template: &str, killer: &str, victim: &str, kills: u32, prefix
         .replace("%o", victim);
     
     format
-        .replace("{prefix}", prefix)
-        .replace("{message}", &message)
-        .replace("{k}", killer)
-        .replace("{d}", victim)
-        .replace("{kills}", &kills.to_string())
+        .replace("%t", prefix)
+        .replace("%m", &message)
+        .replace("%u", killer)
+        .replace("%o", victim)
+        .replace("%c", &kills.to_string())
 }
