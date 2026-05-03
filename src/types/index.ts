@@ -56,6 +56,15 @@ export interface MonitorStatus {
   deaths: number;
 }
 
+// 更新相关类型
+export interface UpdateInfo {
+  has_update: boolean;
+  current_version: string;
+  latest_version: string;
+  release_url: string;
+  release_notes: string;
+}
+
 export type MonitorEvent =
   | {
       type: "Kill";

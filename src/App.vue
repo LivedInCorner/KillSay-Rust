@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 import { useConfigStore } from "./stores/config";
 import { useMonitorStore } from "./stores/monitor";
 import { useThemeStore } from "./stores/theme";
+import type { UpdateInfo } from "./types";
 import TitleBar from "./components/layout/TitleBar.vue";
 import Home from "./views/Home.vue";
 import Settings from "./views/Settings.vue";
@@ -17,10 +19,33 @@ const showSettings = ref(false);
 const showColorPicker = ref(false);
 const showShare = ref(false);
 
+// Update state
+const showUpdate = ref(false);
+const updateInfo = ref<UpdateInfo | null>(null);
+
 // Check if this is the stats window
 const isStatsWindow = computed(() => {
   return window.location.hash === "#/stats";
 });
+
+async function checkForUpdate() {
+  try {
+    const info = await invoke<UpdateInfo>("check_for_update");
+    if (info.has_update) {
+      updateInfo.value = info;
+      showUpdate.value = true;
+    }
+  } catch (e) {
+    console.error("检查更新失败:", e);
+  }
+}
+
+function openReleaseUrl() {
+  if (updateInfo.value?.release_url) {
+    window.open(updateInfo.value.release_url, "_blank");
+  }
+  showUpdate.value = false;
+}
 
 onMounted(async () => {
   // Only initialize config stores for main window
@@ -28,6 +53,9 @@ onMounted(async () => {
     await configStore.fetchCurrentConfig();
     await configStore.fetchConfigList();
     await configStore.fetchSettings();
+    
+    // Check for updates after a short delay
+    setTimeout(checkForUpdate, 2000);
   }
   
   // 设置监控事件监听
@@ -80,6 +108,45 @@ onUnmounted(() => {
         @close="showShare = false"
       />
     </Transition>
+    
+    <!-- 更新提示 -->
+    <Transition name="fade">
+      <div v-if="showUpdate && updateInfo" class="update-overlay" @mousedown.self="showUpdate = false">
+        <div class="update-panel dg-panel">
+          <div class="update-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            <h3>发现新版本</h3>
+          </div>
+          
+          <div class="update-info">
+            <div class="version-row">
+              <span class="label">当前版本:</span>
+              <span class="value">{{ updateInfo.current_version }}</span>
+            </div>
+            <div class="version-row">
+              <span class="label">最新版本:</span>
+              <span class="value highlight">{{ updateInfo.latest_version }}</span>
+            </div>
+          </div>
+          
+          <div v-if="updateInfo.release_notes" class="update-notes">
+            <span class="notes-label">更新内容:</span>
+            <div class="notes-content">{{ updateInfo.release_notes }}</div>
+          </div>
+          
+          <div class="update-actions">
+            <button class="dg-btn dg-btn--primary" @click="openReleaseUrl">
+              前往下载
+            </button>
+            <button class="dg-btn dg-btn--secondary" @click="showUpdate = false">
+              稍后再说
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -101,5 +168,113 @@ onUnmounted(() => {
   bottom: 0;
   pointer-events: none;
   z-index: 0;
+}
+
+/* 更新弹窗 */
+.update-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+.update-panel {
+  width: 420px;
+  animation: slideUp 0.25s ease;
+}
+
+.update-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.update-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.update-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.version-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.version-row .label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.version-row .value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.version-row .value.highlight {
+  color: var(--accent-blue);
+}
+
+.update-notes {
+  margin-bottom: var(--spacing-md);
+}
+
+.notes-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.notes-content {
+  font-size: 13px;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.2);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-small);
+  max-height: 150px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.update-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 </style>

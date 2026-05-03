@@ -7,6 +7,8 @@ mod config;
 mod monitor;
 // Tauri命令模块
 mod commands;
+// 更新模块
+mod updater;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -52,6 +54,7 @@ pub fn run() {
             commands::start_monitoring,
             commands::stop_monitoring,
             commands::get_monitor_status,
+            updater::check_for_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
