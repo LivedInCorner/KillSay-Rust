@@ -1,0 +1,484 @@
+/* KILLSAY - Diegetic 工业科幻风样式 */
+
+/* CSS Variables */
+:root {
+  /* 主色系 */
+  --bg-primary: #1A1D22;
+  --bg-panel: #272B33;
+  --border-light: #3A3F48;
+  --text-primary: #E5E7EB;
+  --text-secondary: #9CA3AF;
+  
+  /* 主题强调色 */
+  --accent-yellow: #F9D342;
+  --accent-yellow-dark: #C8A930;
+  
+  /* 辅助科技色 */
+  --accent-blue: #60A5FA;
+  --accent-red: #EF4444;
+  
+  /* 圆角 */
+  --radius-panel: 8px;
+  --radius-card: 6px;
+  --radius-small: 4px;
+  
+  /* 间距 */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  
+  /* 字体 */
+  --font-main: "Microsoft YaHei", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
+  
+  /* 磨砂玻璃 */
+  --glass-bg: rgba(39, 43, 51, 0.75);
+  --glass-border: rgba(249, 211, 66, 0.15);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --glass-blur: blur(16px);
+  
+  /* 高亮效果 */
+  --highlight-border: 1px solid #F9D342;
+  --highlight-shadow: 0 0 12px rgba(249, 211, 66, 0.35);
+}
+
+/* 全局重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+/* Diegetic 面板 */
+.dg-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--glass-shadow);
+  padding: var(--spacing-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 面板装饰线 */
+.dg-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent-yellow-dark) 20%,
+    var(--accent-yellow) 50%,
+    var(--accent-yellow-dark) 80%,
+    transparent
+  );
+  opacity: 0.5;
+}
+
+/* Diegetic 卡片 */
+.dg-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-md);
+  transition: all 0.3s ease;
+}
+
+.dg-card:hover {
+  border-color: var(--accent-yellow-dark);
+  box-shadow: 0 0 8px rgba(249, 211, 66, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Diegetic 按钮 */
+.dg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-main);
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.dg-btn:hover {
+  border-color: var(--accent-yellow);
+  background: rgba(249, 211, 66, 0.1);
+}
+
+.dg-btn:active {
+  transform: scale(0.98);
+}
+
+/* 主要按钮 */
+.dg-btn--primary {
+  background: var(--accent-yellow);
+  color: var(--bg-primary);
+  border-color: var(--accent-yellow);
+  font-weight: 600;
+}
+
+.dg-btn--primary:hover {
+  background: var(--accent-yellow-dark);
+  border-color: var(--accent-yellow-dark);
+  box-shadow: var(--highlight-shadow);
+}
+
+/* 危险按钮 */
+.dg-btn--danger {
+  background: var(--accent-red);
+  color: var(--text-primary);
+  border-color: var(--accent-red);
+}
+
+.dg-btn--danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+}
+
+/* 次要按钮 */
+.dg-btn--secondary {
+  background: transparent;
+  border-color: var(--border-light);
+  color: var(--text-secondary);
+}
+
+.dg-btn--secondary:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+/* 成功状态按钮 */
+.dg-btn--success {
+  background: #059669;
+  color: var(--text-primary);
+  border-color: #059669;
+}
+
+.dg-btn--success:hover {
+  background: #047857;
+  border-color: #047857;
+  box-shadow: 0 0 12px rgba(5, 150, 105, 0.35);
+}
+
+/* Diegetic 输入框 */
+.dg-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: var(--font-main);
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-small);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.dg-input:focus {
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 8px rgba(249, 211, 66, 0.2);
+}
+
+.dg-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* Diegetic 文本域 */
+.dg-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-small);
+  outline: none;
+  resize: vertical;
+  min-height: 100px;
+  transition: all 0.3s ease;
+}
+
+.dg-textarea:focus {
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 8px rgba(249, 211, 66, 0.2);
+}
+
+/* Diegetic 标签 */
+.dg-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Diegetic 标题 */
+.dg-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.dg-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Diegetic 分割线 */
+.dg-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: var(--spacing-md) 0;
+  position: relative;
+}
+
+.dg-divider::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--accent-yellow);
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+/* Diegetic 统计数字 */
+.dg-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--accent-yellow);
+  line-height: 1;
+}
+
+.dg-stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+/* Diegetic 状态指示器 */
+.dg-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dg-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+}
+
+.dg-status--active .dg-status-dot {
+  background: var(--accent-yellow);
+  box-shadow: 0 0 8px rgba(249, 211, 66, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.dg-status--error .dg-status-dot {
+  background: var(--accent-red);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Diegetic 悬浮呼吸动效 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.dg-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Diegetic 光晕效果 */
+.dg-glow {
+  position: relative;
+}
+
+.dg-glow::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    var(--accent-yellow) 50%,
+    transparent
+  );
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.dg-glow:hover::after {
+  opacity: 0.3;
+}
+
+/* Diegetic 几何装饰 */
+.dg-hexagon {
+  width: 24px;
+  height: 24px;
+  background: var(--accent-yellow);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  opacity: 0.3;
+}
+
+.dg-triangle {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid var(--accent-yellow);
+  opacity: 0.3;
+}
+
+/* Diegetic 网格背景 */
+.dg-grid-bg {
+  background-image: 
+    linear-gradient(var(--border-light) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-light) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+  opacity: 0.1;
+}
+
+/* Diegetic 径向刻度线 */
+.dg-radial-marks {
+  position: relative;
+}
+
+.dg-radial-marks::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: repeating-conic-gradient(
+    var(--border-light) 0deg 10deg,
+    transparent 10deg 20deg
+  );
+  border-radius: 50%;
+  opacity: 0.1;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* 选择文本样式 */
+::selection {
+  background: var(--accent-yellow);
+  color: var(--bg-primary);
+}
+
+/* 过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
