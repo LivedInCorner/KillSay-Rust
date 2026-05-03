@@ -26,8 +26,8 @@ fn strip_v(s: &str) -> String {
 }
 
 fn version_greater(a: &str, b: &str) -> bool {
-    let pa: Vec<u32> = a.split('.').filter_map(|s| s.parse()).collect();
-    let pb: Vec<u32> = b.split('.').filter_map(|s| s.parse()).collect();
+    let pa: Vec<u32> = a.split('.').filter_map(|s| s.parse().ok()).collect();
+    let pb: Vec<u32> = b.split('.').filter_map(|s| s.parse().ok()).collect();
     let len = pa.len().max(pb.len());
     for i in 0..len {
         let va = pa.get(i).copied().unwrap_or(0);
