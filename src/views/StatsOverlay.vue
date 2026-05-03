@@ -11,6 +11,10 @@ const kdr = computed(() => {
 });
 
 onMounted(() => {
+  // Set transparent background for stats window
+  document.documentElement.style.background = "transparent";
+  document.body.style.background = "transparent";
+  
   monitorStore.setupEventListener();
 });
 
