@@ -462,7 +462,7 @@ class KillSayApp(QtWidgets.QWidget):
     
     def _update_stats_window_display(self):
         """更新统计窗口显示"""
-        if not hasattr(self, 'stats_window') or not self.stats_window.isVisible():
+        if not hasattr(self, 'stats_window'):
             return
         
         kdr = self.kills / self.deaths if self.deaths != 0 else self.kills
@@ -567,7 +567,7 @@ class KillSayApp(QtWidgets.QWidget):
         self.kill_pattern_text.setPlainText("\n".join(edit_config.get("kill_patterns", [])))
         kill_pattern_layout.addWidget(self.kill_pattern_text)
         
-        help_label = QtWidgets.QLabel("提示: {d}=被击杀者, {k}=击杀者\n示例: {d}被{k}击败 或 {k}击败了{d}")
+        help_label = QtWidgets.QLabel("提示: {d}=被击杀者, {k}=击杀者, ./n=动态数字\n示例: {d}被{k}击败 或 {k}击败了{d}，以及 {d}被{k}击败./n")
         help_label.setStyleSheet("font-size: 8pt; color: #bdc3c7;")
         kill_pattern_layout.addWidget(help_label)
         tab_widget.addTab(kill_pattern_tab, "击杀检测模式")
@@ -592,7 +592,7 @@ class KillSayApp(QtWidgets.QWidget):
         format_layout.addRow("消息前缀:", self.prefix_edit)
         self.format_edit = QtWidgets.QLineEdit(edit_config.get("killsay_format", ConfigManager.DEFAULT_CONFIG["killsay_format"]))
         format_layout.addRow("Killsay 格式:", self.format_edit)
-        format_help = QtWidgets.QLabel("支持占位符:\n{prefix} - 消息前缀\n{message} - 击杀消息内容\n{k} - 击杀者名称\n{d} - 被击杀者名称\n{kills} - 当前击杀数\n示例: {prefix}{message} | 当前击杀数：{kills}")
+        format_help = QtWidgets.QLabel("支持占位符:\n{prefix} - 消息前缀\n{message} - 击杀消息内容\n{k} - 击杀者名称\n{d} - 被击杀者名称\n{kills} - 当前击杀数\n{deaths} - 当前死亡数\n{kd} / {kdr} - 当前K/D\n示例: {prefix}{message} | 当前击杀数：{kills} | K/D：{kdr}")
         format_help.setStyleSheet("font-size: 8pt; color: #bdc3c7;")
         format_help.setWordWrap(True)
         format_layout.addRow(format_help)
@@ -643,7 +643,7 @@ class KillSayApp(QtWidgets.QWidget):
             
             # 如果是当前配置，更新内存中的配置
             if is_current:
-                self.current_config = config_data
+                self.config_mgr.current_config = config_data
                 self._load_from_config()
             
             QtWidgets.QMessageBox.information(dialog, "成功", "配置已保存")
@@ -917,7 +917,7 @@ class KillSayApp(QtWidgets.QWidget):
         """处理击杀消息"""
         for pattern in self.kill_patterns:
             regex_pattern = self._convert_kill_pattern(pattern)
-            match = re.match(regex_pattern, msg)
+            match = re.search(regex_pattern, msg)
             if match:
                 data = match.groups()
                 if len(data) >= 2:
@@ -938,12 +938,10 @@ class KillSayApp(QtWidgets.QWidget):
                         formatted_message = self._format_kill_message(raw_message, k, d)
                         send_msg = self._build_killsay_message(formatted_message, k, d)
                         self._send_chat(send_msg)
-                        # self.message_signal.emit(f"检测到击杀：{k} 击杀 {d}")
                         QtCore.QTimer.singleShot(0, self._update_stats_display)
                     
                     if d == self.user:
                         self.deaths += 1
-                        # self.message_signal.emit(f"检测到被击杀：{d} 被 {k} 击杀")
                         QtCore.QTimer.singleShot(0, self._update_stats_display)
                     break
     
@@ -970,8 +968,9 @@ class KillSayApp(QtWidgets.QWidget):
     def _convert_kill_pattern(self, pattern):
         """转换击杀模式为正则表达式"""
         escaped_pattern = re.escape(pattern)
-        escaped_pattern = escaped_pattern.replace(r'\{d\}', '(.*)')
-        escaped_pattern = escaped_pattern.replace(r'\{k\}', '(.*)')
+        escaped_pattern = escaped_pattern.replace(r'\{d\}', '(.*?)')
+        escaped_pattern = escaped_pattern.replace(r'\{k\}', '(.*?)')
+        escaped_pattern = escaped_pattern.replace(r'\./n', '(\\d+)')
         return escaped_pattern
     
     def _format_kill_message(self, message, killer, killed):
@@ -991,6 +990,10 @@ class KillSayApp(QtWidgets.QWidget):
         result = result.replace("{k}", killer)
         result = result.replace("{d}", killed)
         result = result.replace("{kills}", str(self.kills))
+        result = result.replace("{deaths}", str(self.deaths))
+        kdr_value = self.kills / self.deaths if self.deaths != 0 else float(self.kills)
+        result = result.replace("{kd}", f"{kdr_value:.2f}")
+        result = result.replace("{kdr}", f"{kdr_value:.2f}")
         # 清理可能出现的重复前缀占位符
         return result.strip()
     
