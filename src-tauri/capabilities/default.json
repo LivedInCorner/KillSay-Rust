@@ -1,7 +1,7 @@
 {
   "identifier": "default",
   "description": "Default capabilities for KILLSAY",
-  "windows": ["main"],
+  "windows": ["main", "stats"],
   "permissions": [
     "core:default",
     "core:window:default",
@@ -20,7 +20,6 @@
     "core:window:allow-unmaximize",
     "core:window:allow-hide",
     "core:window:allow-show",
-    "core:window:allow-close",
     "core:webview:default",
     "dialog:default",
     "dialog:allow-open",
