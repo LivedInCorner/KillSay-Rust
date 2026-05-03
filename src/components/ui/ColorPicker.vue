@@ -77,23 +77,6 @@ function hexToHsv(hex: string): [number, number, number] | null {
 // Current color values
 const currentRgb = computed(() => hsvToRgb(hue.value, saturation.value, value.value));
 const currentHex = computed(() => rgbToHex(...currentRgb.value));
-const currentHsl = computed(() => {
-  const [r, g, b] = currentRgb.value.map(x => x / 255);
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const d = max - min;
-  let h = 0, s = 0;
-  
-  if (d !== 0) {
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
-    else if (max === g) h = ((b - r) / d + 2) * 60;
-    else h = ((r - g) / d + 4) * 60;
-  }
-  
-  return `hsl(${Math.round(h)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
-});
 
 // Update hex input when color changes
 watch(currentHex, (val) => {

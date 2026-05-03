@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { useConfigStore } from "@/stores/config";
 import { message } from "@tauri-apps/plugin-dialog";
 import GeoElement from "@/components/ui/GeoElement.vue";

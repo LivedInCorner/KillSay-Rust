@@ -35,7 +35,7 @@ const confirmTitle = ref("");
 const confirmMessage = ref("");
 const confirmKind = ref<"info" | "warning" | "error">("warning");
 const confirmShowCancel = ref(true);
-const confirmCallback: (() => void) | null = ref(null);
+const confirmCallback = ref<(() => void) | null>(null);
 
 // 计算属性
 const kdr = computed(() => monitorStore.kdr);
@@ -191,7 +191,7 @@ async function setDefaultConfig(path: string) {
 }
 
 // 选择用户历史
-async function selectUser(value: string) {
+function selectUser(value: string) {
   user.value = value;
   showUserHistory.value = false;
 }
@@ -200,26 +200,26 @@ async function selectUser(value: string) {
 async function setDefaultUser(value: string) {
   try {
     await configStore.setDefaultUser(value);
-    await message("已设置为默认游戏名称", { title: "KILLSAY", kind: "info" });
+    showConfirmDialog("成功", "已设置为默认游戏名称", "info", () => {}, false);
   } catch (e) {
-    await message(`设置失败: ${e}`, { title: "KILLSAY", kind: "error" });
+    showConfirmDialog("错误", `设置失败: ${e}`, "error", () => {}, false);
   }
 }
 
 // 删除用户历史
-async function removeUser(value: string) {
-  const confirmed = await confirm("确定要删除此历史记录吗？", {
-    title: "KILLSAY",
-    kind: "warning",
-  });
-  
-  if (confirmed) {
-    await configStore.removeUserHistory(value);
-  }
+function removeUser(value: string) {
+  showConfirmDialog(
+    "确认删除",
+    "确定要删除此历史记录吗？",
+    "warning",
+    async () => {
+      await configStore.removeUserHistory(value);
+    }
+  );
 }
 
 // 选择路径历史
-async function selectPath(value: string) {
+function selectPath(value: string) {
   logFilePath.value = value;
   showPathHistory.value = false;
 }
@@ -228,22 +228,22 @@ async function selectPath(value: string) {
 async function setDefaultPath(value: string) {
   try {
     await configStore.setDefaultPath(value);
-    await message("已设置为默认路径", { title: "KILLSAY", kind: "info" });
+    showConfirmDialog("成功", "已设置为默认路径", "info", () => {}, false);
   } catch (e) {
-    await message(`设置失败: ${e}`, { title: "KILLSAY", kind: "error" });
+    showConfirmDialog("错误", `设置失败: ${e}`, "error", () => {}, false);
   }
 }
 
 // 删除路径历史
-async function removePath(value: string) {
-  const confirmed = await confirm("确定要删除此历史记录吗？", {
-    title: "KILLSAY",
-    kind: "warning",
-  });
-  
-  if (confirmed) {
-    await configStore.removePathHistory(value);
-  }
+function removePath(value: string) {
+  showConfirmDialog(
+    "确认删除",
+    "确定要删除此历史记录吗？",
+    "warning",
+    async () => {
+      await configStore.removePathHistory(value);
+    }
+  );
 }
 
 // 切换悬浮统计窗口
