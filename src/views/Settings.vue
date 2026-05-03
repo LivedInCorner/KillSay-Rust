@@ -42,7 +42,7 @@ const appInfo = {
           <!-- Logo 区域 -->
           <div class="logo-area">
             <div class="logo-decoration">
-              <img src="/icons/icon.ico" alt="KILLSAY Logo" class="logo-icon" />
+              <img src="/icons/icon.svg" alt="KILLSAY Logo" class="logo-icon" />
             </div>
             <div class="logo-text">
               <h1 class="app-name">{{ appInfo.name }}</h1>

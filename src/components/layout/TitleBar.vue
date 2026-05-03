@@ -30,7 +30,7 @@ async function closeWindow() {
   <div class="title-bar" data-tauri-drag-region>
     <!-- 左侧图标和标题 -->
     <div class="title-bar__left">
-      <img src="/icons/icon.ico" alt="KILLSAY" class="title-bar__icon" />
+      <img src="/icons/icon.svg" alt="KILLSAY" class="title-bar__icon" />
       <span class="title-bar__title">KILLSAY</span>
     </div>
     
