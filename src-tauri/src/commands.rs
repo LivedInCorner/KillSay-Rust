@@ -165,6 +165,7 @@ pub async fn toggle_stats_window(app_handle: tauri::AppHandle) -> Result<(), Str
     .title("KILLSAY Stats")
     .inner_size(300.0, 90.0)
     .decorations(false)
+    .transparent(true)
     .always_on_top(true)
     .resizable(false)
     .skip_taskbar(true)

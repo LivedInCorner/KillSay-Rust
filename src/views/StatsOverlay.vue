@@ -63,11 +63,12 @@ async function closeWindow() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1A1D22;
+  background: rgba(26, 29, 34, 0.85);
   border: 1px solid rgba(249, 211, 66, 0.3);
-  border-radius: 8px;
+  border-radius: 12px;
   position: relative;
   user-select: none;
+  backdrop-filter: blur(12px);
 }
 
 .stats-container {
