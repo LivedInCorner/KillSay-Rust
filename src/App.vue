@@ -25,7 +25,8 @@ const updateInfo = ref<UpdateInfo | null>(null);
 
 // Check if this is the stats window
 const isStatsWindow = computed(() => {
-  return window.location.hash === "#/stats";
+  const params = new URLSearchParams(window.location.search);
+  return params.get("stats") === "true";
 });
 
 async function checkForUpdate() {

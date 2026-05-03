@@ -139,7 +139,7 @@ pub fn get_monitor_status(monitor_state: State<'_, Mutex<MonitorState>>) -> Resu
 }
 
 #[tauri::command]
-pub fn toggle_stats_window(app_handle: tauri::AppHandle) -> Result<(), String> {
+pub async fn toggle_stats_window(app_handle: tauri::AppHandle) -> Result<(), String> {
     use tauri::{WebviewUrl, WebviewWindowBuilder};
     
     let label = "stats";
@@ -156,11 +156,11 @@ pub fn toggle_stats_window(app_handle: tauri::AppHandle) -> Result<(), String> {
         return Ok(());
     }
     
-    // Create new stats window using main app with hash
+    // Create new stats window
     let _window = WebviewWindowBuilder::new(
         &app_handle,
         label,
-        WebviewUrl::App("index.html#/stats".into()),
+        WebviewUrl::App("index.html?stats=true".into()),
     )
     .title("KILLSAY Stats")
     .inner_size(300.0, 90.0)

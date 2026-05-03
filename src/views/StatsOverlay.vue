@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
 import { useMonitorStore } from "@/stores/monitor";
 
 const monitorStore = useMonitorStore();
-const isReady = ref(false);
 
 const kdr = computed(() => {
   if (monitorStore.deaths === 0) return monitorStore.kills.toFixed(1);
   return (monitorStore.kills / monitorStore.deaths).toFixed(1);
 });
 
-onMounted(async () => {
+onMounted(() => {
   monitorStore.setupEventListener();
-  isReady.value = true;
 });
 
 onUnmounted(() => {
@@ -21,7 +19,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="stats-overlay" v-if="isReady">
+  <div class="stats-overlay">
     <div class="stats-container">
       <div class="stat-item kills">
         <span class="stat-value">{{ monitorStore.kills }}</span>
@@ -44,10 +42,6 @@ onUnmounted(() => {
     </div>
     
     <div class="status-dot" :class="{ active: monitorStore.isRunning }"></div>
-  </div>
-  
-  <div v-else class="stats-loading">
-    <span>加载中...</span>
   </div>
 </template>
 
