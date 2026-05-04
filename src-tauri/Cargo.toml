@@ -1,6 +1,6 @@
 [package]
 name = "killsay-tauri"
-version = "1.0.1"
+version = "1.0.0"
 description = "Minecraft Kill Say Script"
 authors = ["you"]
 edition = "2021"

@@ -66,6 +66,12 @@ export interface UpdateInfo {
   debug_info: string;
 }
 
+export interface DownloadProgress {
+  downloaded: number;
+  total: number;
+  percentage: number;
+}
+
 export type MonitorEvent =
   | {
       type: "Kill";

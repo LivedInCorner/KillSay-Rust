@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import type { UpdateInfo } from "@/types";
+import { listen } from "@tauri-apps/api/event";
+import type { UpdateInfo, DownloadProgress } from "@/types";
 import GeoElement from "@/components/ui/GeoElement.vue";
 import GeoLine from "@/components/ui/GeoLine.vue";
 
@@ -11,8 +12,13 @@ const emit = defineEmits<{
 
 const updateInfo = ref<UpdateInfo | null>(null);
 const loading = ref(false);
-const autoUpdate = ref(false);
+const downloading = ref(false);
+const downloadProgress = ref<DownloadProgress | null>(null);
+const installerPath = ref<string | null>(null);
 const error = ref<string | null>(null);
+const autoUpdate = ref(false);
+
+let unlistenProgress: (() => void) | null = null;
 
 // Check for update
 async function checkForUpdate() {
@@ -27,24 +33,69 @@ async function checkForUpdate() {
   }
 }
 
-// Open release URL
-function openReleaseUrl() {
-  if (updateInfo.value?.release_url) {
-    window.open(updateInfo.value.release_url, "_blank");
+// Download update
+async function downloadUpdate() {
+  if (!updateInfo.value) return;
+  
+  downloading.value = true;
+  downloadProgress.value = null;
+  error.value = null;
+  
+  try {
+    const path = await invoke<string>("download_update", { 
+      version: updateInfo.value.latest_version 
+    });
+    installerPath.value = path;
+  } catch (e) {
+    error.value = String(e);
+  } finally {
+    downloading.value = false;
   }
 }
 
-// Load auto-update setting from localStorage
-onMounted(() => {
+// Install and restart
+async function installAndRestart() {
+  if (!installerPath.value) return;
+  
+  try {
+    await invoke("install_update", { installerPath: installerPath.value });
+  } catch (e) {
+    error.value = String(e);
+  }
+}
+
+// Load auto-update setting
+onMounted(async () => {
   const saved = localStorage.getItem("killsay-auto-update");
   autoUpdate.value = saved === "true";
+  
+  // Listen for download progress
+  unlistenProgress = await listen<DownloadProgress>("update-download-progress", (event) => {
+    downloadProgress.value = event.payload;
+  });
+  
   checkForUpdate();
 });
 
-// Save auto-update setting
+onUnmounted(() => {
+  if (unlistenProgress) {
+    unlistenProgress();
+  }
+});
+
+// Toggle auto-update
 function toggleAutoUpdate() {
   autoUpdate.value = !autoUpdate.value;
   localStorage.setItem("killsay-auto-update", String(autoUpdate.value));
+}
+
+// Format bytes
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 </script>
 
@@ -79,17 +130,57 @@ function toggleAutoUpdate() {
       
       <!-- 更新状态 -->
       <div class="update-status">
+        <!-- 加载中 -->
         <div v-if="loading" class="status-loading">
           <div class="loading-spinner"></div>
           <span>正在检查更新...</span>
         </div>
         
+        <!-- 错误 -->
         <div v-else-if="error" class="status-error">
           <GeoElement type="triangle" :size="16" color="var(--accent-red)" />
           <span>{{ error }}</span>
           <button class="dg-btn dg-btn--secondary dg-btn--sm" @click="checkForUpdate">重试</button>
         </div>
         
+        <!-- 下载中 -->
+        <div v-else-if="downloading" class="status-downloading">
+          <div class="download-info">
+            <span class="download-title">正在下载 v{{ updateInfo?.latest_version }}...</span>
+            <div v-if="downloadProgress" class="download-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" :style="{ width: downloadProgress.percentage + '%' }"></div>
+              </div>
+              <div class="progress-text">
+                <span>{{ downloadProgress.percentage }}%</span>
+                <span>{{ formatBytes(downloadProgress.downloaded) }} / {{ formatBytes(downloadProgress.total) }}</span>
+              </div>
+            </div>
+            <div v-else class="download-waiting">
+              <div class="loading-spinner"></div>
+              <span>准备下载...</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 下载完成 -->
+        <div v-else-if="installerPath" class="status-ready">
+          <GeoElement type="circle" :size="24" color="var(--accent-green, #22c55e)" />
+          <div class="ready-info">
+            <span class="ready-title">下载完成</span>
+            <span class="ready-desc">点击安装将关闭应用并启动安装程序</span>
+          </div>
+          <button class="dg-btn dg-btn--primary" @click="installAndRestart">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            立即安装并重启
+          </button>
+        </div>
+        
+        <!-- 有更新 -->
         <div v-else-if="updateInfo?.has_update" class="status-has-update">
           <div class="update-version-info">
             <div class="version-row">
@@ -107,16 +198,17 @@ function toggleAutoUpdate() {
             <div class="notes-content">{{ updateInfo.release_notes }}</div>
           </div>
           
-          <button class="dg-btn dg-btn--primary" @click="openReleaseUrl">
+          <button class="dg-btn dg-btn--primary" @click="downloadUpdate">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            前往下载
+            下载更新
           </button>
         </div>
         
+        <!-- 已是最新 -->
         <div v-else class="status-latest">
           <GeoElement type="circle" :size="24" color="var(--accent-green, #22c55e)" />
           <div class="latest-info">
@@ -134,7 +226,11 @@ function toggleAutoUpdate() {
       
       <!-- 刷新按钮 -->
       <div class="update-actions">
-        <button class="dg-btn dg-btn--secondary" @click="checkForUpdate" :disabled="loading">
+        <button 
+          class="dg-btn dg-btn--secondary" 
+          @click="checkForUpdate" 
+          :disabled="loading || downloading"
+        >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ spinning: loading }">
             <polyline points="23 4 23 10 17 10" />
             <polyline points="1 20 1 14 7 14" />
@@ -290,6 +386,90 @@ function toggleAutoUpdate() {
   font-size: 13px;
 }
 
+/* Downloading */
+.status-downloading {
+  width: 100%;
+}
+
+.download-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.download-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.download-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-yellow);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.download-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Ready to install */
+.status-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.ready-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ready-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ready-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Has update */
 .status-has-update {
   width: 100%;
   display: flex;
@@ -347,6 +527,7 @@ function toggleAutoUpdate() {
   line-height: 1.5;
 }
 
+/* Latest */
 .status-latest {
   display: flex;
   flex-direction: column;

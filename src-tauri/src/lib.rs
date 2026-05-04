@@ -56,6 +56,8 @@ pub fn run() {
             commands::get_monitor_status,
             commands::get_app_version,
             updater::check_for_update,
+            updater::download_update,
+            updater::install_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

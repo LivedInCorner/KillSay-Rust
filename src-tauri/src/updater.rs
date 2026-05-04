@@ -1,5 +1,10 @@
+use std::fs;
+use std::io::Write;
+use std::process::Command;
+
 use reqwest::header::{ACCEPT, USER_AGENT};
 use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Emitter};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateInfo {
@@ -11,6 +16,13 @@ pub struct UpdateInfo {
     pub debug_info: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DownloadProgress {
+    pub downloaded: u64,
+    pub total: u64,
+    pub percentage: u32,
+}
+
 #[derive(Debug, Deserialize)]
 struct GitHubRelease {
     tag_name: String,
@@ -18,6 +30,15 @@ struct GitHubRelease {
     body: String,
     html_url: String,
     prerelease: bool,
+    assets: Vec<GitHubAsset>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubAsset {
+    name: String,
+    browser_download_url: String,
+    size: u64,
+    content_type: String,
 }
 
 const GITHUB_API: &str = "https://api.github.com/repos/LivedInCorner/KillSay-Rust/releases";
@@ -43,8 +64,7 @@ fn current_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
-#[tauri::command]
-pub async fn check_for_update() -> Result<UpdateInfo, String> {
+async fn fetch_releases() -> Result<Vec<GitHubRelease>, String> {
     let client = reqwest::Client::new();
     let resp = client
         .get(GITHUB_API)
@@ -59,25 +79,31 @@ pub async fn check_for_update() -> Result<UpdateInfo, String> {
         return Err(format!("GitHub API 返回错误: {}", resp.status()));
     }
 
-    let releases: Vec<GitHubRelease> = resp
-        .json()
+    resp.json::<Vec<GitHubRelease>>()
         .await
-        .map_err(|e| format!("解析响应失败: {}", e))?;
+        .map_err(|e| format!("解析响应失败: {}", e))
+}
 
+fn find_msi_asset(release: &GitHubRelease) -> Option<&GitHubAsset> {
+    release.assets.iter().find(|a| a.name.ends_with(".msi"))
+}
+
+#[tauri::command]
+pub async fn check_for_update() -> Result<UpdateInfo, String> {
+    let releases = fetch_releases().await?;
     let current = current_version();
     let mut debug_lines = Vec::new();
     debug_lines.push(format!("当前版本: {}", current));
     debug_lines.push(format!("获取到 {} 个 releases", releases.len()));
     
-    // Log all tags
     for r in &releases {
-        debug_lines.push(format!("  tag: {} (prerelease: {})", r.tag_name, r.prerelease));
+        let has_msi = find_msi_asset(r).is_some();
+        debug_lines.push(format!("  tag: {} (prerelease: {}, msi: {})", r.tag_name, r.prerelease, has_msi));
     }
     
-    // Find the latest non-prerelease
     let latest = releases
         .iter()
-        .filter(|r| !r.prerelease)
+        .filter(|r| !r.prerelease && find_msi_asset(r).is_some())
         .max_by(|a, b| {
             let va = strip_v(&a.tag_name);
             let vb = strip_v(&b.tag_name);
@@ -106,7 +132,7 @@ pub async fn check_for_update() -> Result<UpdateInfo, String> {
             })
         }
         None => {
-            debug_lines.push("没有找到非 prerelease 的 release".to_string());
+            debug_lines.push("没有找到包含 MSI 的 release".to_string());
             Ok(UpdateInfo {
                 has_update: false,
                 current_version: current.clone(),
@@ -117,4 +143,84 @@ pub async fn check_for_update() -> Result<UpdateInfo, String> {
             })
         }
     }
+}
+
+#[tauri::command]
+pub async fn download_update(app: AppHandle, version: String) -> Result<String, String> {
+    let releases = fetch_releases().await?;
+    
+    let release = releases
+        .iter()
+        .find(|r| strip_v(&r.tag_name) == version)
+        .ok_or_else(|| format!("未找到版本 {} 的 release", version))?;
+    
+    let asset = find_msi_asset(release)
+        .ok_or_else(|| "未找到 MSI 安装包".to_string())?;
+    
+    let temp_dir = std::env::temp_dir().join("killsay_update");
+    fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("创建临时目录失败: {}", e))?;
+    
+    let file_path = temp_dir.join(&asset.name);
+    let file_path_str = file_path.to_string_lossy().to_string();
+    
+    let client = reqwest::Client::new();
+    let mut resp = client
+        .get(&asset.browser_download_url)
+        .header(USER_AGENT, "KillSay-Updater/1.0")
+        .send()
+        .await
+        .map_err(|e| format!("下载失败: {}", e))?;
+    
+    let total = resp.content_length().unwrap_or(asset.size);
+    let mut downloaded: u64 = 0;
+    let mut last_emit: u64 = 0;
+    let mut file = fs::File::create(&file_path)
+        .map_err(|e| format!("创建文件失败: {}", e))?;
+    
+    while let Some(chunk) = resp.chunk().await
+        .map_err(|e| format!("下载读取失败: {}", e))?
+    {
+        file.write_all(&chunk)
+            .map_err(|e| format!("写入文件失败: {}", e))?;
+        downloaded += chunk.len() as u64;
+        
+        let percentage = if total > 0 { (downloaded * 100 / total) as u32 } else { 0 };
+        
+        if downloaded.saturating_sub(last_emit) >= 256 * 1024 || downloaded >= total {
+            let _ = app.emit("update-download-progress", DownloadProgress {
+                downloaded,
+                total,
+                percentage,
+            });
+            last_emit = downloaded;
+        }
+    }
+    
+    file.flush().map_err(|e| format!("刷新文件失败: {}", e))?;
+    
+    let _ = app.emit("update-download-progress", DownloadProgress {
+        downloaded: total,
+        total,
+        percentage: 100,
+    });
+    
+    Ok(file_path_str)
+}
+
+#[tauri::command]
+pub fn install_update(installer_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&installer_path);
+    if !path.exists() {
+        return Err("安装文件不存在".to_string());
+    }
+    
+    // 启动 MSI 安装器
+    Command::new("msiexec")
+        .args(["/i", &installer_path])
+        .spawn()
+        .map_err(|e| format!("启动安装器失败: {}", e))?;
+    
+    // 退出应用
+    std::process::exit(0);
 }
