@@ -23,7 +23,7 @@ struct GitHubRelease {
 const GITHUB_API: &str = "https://api.github.com/repos/LivedInCorner/KillSay-Rust/releases";
 
 fn strip_v(s: &str) -> String {
-    s.trim().strip_prefix('v').unwrap_or(s.trim()).to_string()
+    s.trim().strip_prefix('v').or_else(|| s.trim().strip_prefix('V')).unwrap_or(s.trim()).to_string()
 }
 
 fn version_greater(a: &str, b: &str) -> bool {
