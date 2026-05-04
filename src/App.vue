@@ -11,6 +11,7 @@ import Settings from "./views/Settings.vue";
 import ColorPicker from "./components/ui/ColorPicker.vue";
 import ShareWindow from "./components/features/ShareWindow.vue";
 import StatsOverlay from "./views/StatsOverlay.vue";
+import UpdateWindow from "./views/UpdateWindow.vue";
 
 const configStore = useConfigStore();
 const monitorStore = useMonitorStore();
@@ -18,6 +19,7 @@ const themeStore = useThemeStore();
 const showSettings = ref(false);
 const showColorPicker = ref(false);
 const showShare = ref(false);
+const showUpdateWindow = ref(false);
 
 // Update state
 const showUpdate = ref(false);
@@ -55,8 +57,11 @@ onMounted(async () => {
     await configStore.fetchConfigList();
     await configStore.fetchSettings();
     
-    // Check for updates after a short delay
-    setTimeout(checkForUpdate, 2000);
+    // Check for updates if auto-update is enabled
+    const autoUpdate = localStorage.getItem("killsay-auto-update");
+    if (autoUpdate === "true") {
+      setTimeout(checkForUpdate, 2000);
+    }
   }
   
   // 设置监控事件监听
@@ -79,6 +84,7 @@ onUnmounted(() => {
       @open-settings="showSettings = true" 
       @open-color-picker="showColorPicker = true"
       @open-share="showShare = true"
+      @open-update="showUpdateWindow = true"
     />
     
     <!-- 背景网格 -->
@@ -107,6 +113,14 @@ onUnmounted(() => {
       <ShareWindow
         v-if="showShare"
         @close="showShare = false"
+      />
+    </Transition>
+    
+    <!-- 更新窗口 -->
+    <Transition name="fade">
+      <UpdateWindow
+        v-if="showUpdateWindow"
+        @close="showUpdateWindow = false"
       />
     </Transition>
     

@@ -7,10 +7,12 @@ const emit = defineEmits<{
   openSettings: [];
   openColorPicker: [];
   openShare: [];
+  openUpdate: [];
 }>();
 
 const themeStore = useThemeStore();
 const isMaximized = ref(false);
+let clickTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function minimizeWindow() {
   await getCurrentWindow().minimize();
@@ -24,18 +26,38 @@ async function toggleMaximize() {
 async function closeWindow() {
   await getCurrentWindow().close();
 }
+
+function handleTitleClick() {
+  if (clickTimer) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+    toggleMaximize();
+  } else {
+    clickTimer = setTimeout(() => {
+      clickTimer = null;
+    }, 300);
+  }
+}
 </script>
 
 <template>
-  <div class="title-bar" data-tauri-drag-region>
+  <div class="title-bar" data-tauri-drag-region @dblclick="toggleMaximize">
     <!-- 左侧图标和标题 -->
-    <div class="title-bar__left">
+    <div class="title-bar__left" @click="handleTitleClick">
       <img src="/icons/icon.svg" alt="KILLSAY" class="title-bar__icon" />
       <span class="title-bar__title">KILLSAY</span>
     </div>
     
     <!-- 右侧控制按钮 -->
     <div class="title-bar__right">
+      <button class="title-bar__btn update-btn" @click="emit('openUpdate')" title="检查更新">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+      </button>
+      
       <button class="title-bar__btn share-btn" @click="emit('openShare')" title="配置分享">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="18" cy="5" r="3" />
@@ -159,6 +181,10 @@ async function closeWindow() {
 
 .share-btn:hover {
   color: var(--accent-blue);
+}
+
+.update-btn:hover {
+  color: var(--accent-green, #22c55e);
 }
 
 .settings-btn:hover {

@@ -102,14 +102,8 @@ async function handleImport() {
       }
     }
     
-    // Reload config list
+    // Reload config list (don't auto-load the imported config)
     await configStore.fetchConfigList();
-    
-    // Try to load the imported config
-    const importedConfig = configStore.configList.find(c => c.name === configName);
-    if (importedConfig) {
-      await configStore.loadConfig(importedConfig.path);
-    }
     
     await message("导入成功！", { title: "KILLSAY", kind: "info" });
     emit("close");
