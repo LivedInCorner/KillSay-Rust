@@ -126,6 +126,12 @@ function toggleAutoUpdate() {
         </div>
       </div>
       
+      <!-- 调试信息 -->
+      <details v-if="updateInfo?.debug_info" class="debug-info">
+        <summary>调试信息</summary>
+        <pre>{{ updateInfo.debug_info }}</pre>
+      </details>
+      
       <!-- 刷新按钮 -->
       <div class="update-actions">
         <button class="dg-btn dg-btn--secondary" @click="checkForUpdate" :disabled="loading">
@@ -364,6 +370,32 @@ function toggleAutoUpdate() {
   font-size: 12px;
   color: var(--text-secondary);
   font-family: var(--font-mono);
+}
+
+/* Debug Info */
+.debug-info {
+  margin-top: var(--spacing-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-small);
+  padding: var(--spacing-sm);
+}
+
+.debug-info summary {
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.debug-info pre {
+  margin-top: var(--spacing-xs);
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 100px;
+  overflow-y: auto;
 }
 
 /* Actions */

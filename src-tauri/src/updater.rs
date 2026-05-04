@@ -8,6 +8,7 @@ pub struct UpdateInfo {
     pub latest_version: String,
     pub release_url: String,
     pub release_notes: String,
+    pub debug_info: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -22,7 +23,7 @@ struct GitHubRelease {
 const GITHUB_API: &str = "https://api.github.com/repos/LivedInCorner/KillSay-Rust/releases";
 
 fn strip_v(s: &str) -> String {
-    s.strip_prefix('v').unwrap_or(s).to_string()
+    s.trim().strip_prefix('v').unwrap_or(s.trim()).to_string()
 }
 
 fn version_greater(a: &str, b: &str) -> bool {
@@ -47,7 +48,7 @@ pub async fn check_for_update() -> Result<UpdateInfo, String> {
     let client = reqwest::Client::new();
     let resp = client
         .get(GITHUB_API)
-        .query(&[("per_page", "5")])
+        .query(&[("per_page", "10")])
         .header(USER_AGENT, "KillSay-Updater/1.0")
         .header(ACCEPT, "application/vnd.github+json")
         .send()
@@ -64,6 +65,14 @@ pub async fn check_for_update() -> Result<UpdateInfo, String> {
         .map_err(|e| format!("解析响应失败: {}", e))?;
 
     let current = current_version();
+    let mut debug_lines = Vec::new();
+    debug_lines.push(format!("当前版本: {}", current));
+    debug_lines.push(format!("获取到 {} 个 releases", releases.len()));
+    
+    // Log all tags
+    for r in &releases {
+        debug_lines.push(format!("  tag: {} (prerelease: {})", r.tag_name, r.prerelease));
+    }
     
     // Find the latest non-prerelease
     let latest = releases
@@ -85,20 +94,27 @@ pub async fn check_for_update() -> Result<UpdateInfo, String> {
         Some(release) => {
             let latest_version = strip_v(&release.tag_name);
             let has_update = version_greater(&latest_version, &current);
+            debug_lines.push(format!("最新版本: {} (有更新: {})", latest_version, has_update));
+            
             Ok(UpdateInfo {
                 has_update,
                 current_version: current,
                 latest_version,
                 release_url: release.html_url.clone(),
                 release_notes: release.body.clone(),
+                debug_info: debug_lines.join("\n"),
             })
         }
-        None => Ok(UpdateInfo {
-            has_update: false,
-            current_version: current.clone(),
-            latest_version: current,
-            release_url: String::new(),
-            release_notes: String::new(),
-        }),
+        None => {
+            debug_lines.push("没有找到非 prerelease 的 release".to_string());
+            Ok(UpdateInfo {
+                has_update: false,
+                current_version: current.clone(),
+                latest_version: current,
+                release_url: String::new(),
+                release_notes: String::new(),
+                debug_info: debug_lines.join("\n"),
+            })
+        }
     }
 }
