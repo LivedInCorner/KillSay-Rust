@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-版本号自动修改脚本
-用法: python bump_version.py [major|minor|patch]
+版本号修改脚本
+用法: python bump_version.py <version> [--write]
+
+示例:
+  python bump_version.py 1.0.0 --write
+  python bump_version.py 2.1.0 --write
 """
 
 import json
@@ -52,61 +56,59 @@ def write_version(file_path: Path, old_version: str, new_version: str):
     file_path.write_text(new_content, encoding="utf-8")
 
 
-def bump_version(version: str, part: str) -> str:
-    """递增版本号"""
-    major, minor, patch = map(int, version.split("."))
-    
-    if part == "major":
-        return f"{major + 1}.0.0"
-    elif part == "minor":
-        return f"{major}.{minor + 1}.0"
-    elif part == "patch":
-        return f"{major}.{minor}.{patch + 1}"
-    else:
-        raise ValueError(f"无效的版本部分: {part}")
+def validate_version(version: str) -> bool:
+    """验证版本号格式"""
+    return bool(re.match(r'^\d+\.\d+\.\d+$', version))
 
 
 def main():
     if len(sys.argv) < 2:
-        print("用法: python bump_version.py [major|minor|patch]")
-        print("  major - 主版本号 (1.0.0 -> 2.0.0)")
-        print("  minor - 次版本号 (1.0.0 -> 1.1.0)")
-        print("  patch - 补丁版本号 (1.0.0 -> 1.0.1)")
+        print("用法: python bump_version.py <version> [--write]")
+        print("示例: python bump_version.py 1.0.0 --write")
         sys.exit(1)
     
-    part = sys.argv[1].lower()
-    if part not in ("major", "minor", "patch"):
-        print(f"错误: 无效的版本部分 '{part}'")
+    new_version = sys.argv[1]
+    write_mode = "--write" in sys.argv
+    
+    if not validate_version(new_version):
+        print(f"错误: 无效的版本号格式 '{new_version}'")
+        print("版本号格式应为: x.y.z (例如 1.0.0)")
         sys.exit(1)
     
     # 读取当前版本
     current_version = read_version(FILES["package.json"])
     print(f"当前版本: {current_version}")
+    print(f"目标版本: {new_version}")
     
-    # 计算新版本
-    new_version = bump_version(current_version, part)
-    print(f"新版本: {new_version}")
+    if current_version == new_version:
+        print("版本号相同，无需修改")
+        sys.exit(0)
     
-    # 确认
-    confirm = input(f"确认将版本从 {current_version} 更新到 {new_version}? (y/N): ")
-    if confirm.lower() != "y":
-        print("已取消")
+    if not write_mode:
+        print("\n预览模式，未修改任何文件")
+        print(f"如需修改，请执行: python bump_version.py {new_version} --write")
         sys.exit(0)
     
     # 更新所有文件
+    success = True
     for name, path in FILES.items():
         try:
             write_version(path, current_version, new_version)
             print(f"✓ 已更新 {name}")
         except Exception as e:
             print(f"✗ 更新 {name} 失败: {e}")
+            success = False
     
-    print(f"\n版本已更新为 {new_version}")
-    print("请记得提交并创建新的 git tag:")
-    print(f"  git add -A")
-    print(f'  git commit -m "chore: bump version to {new_version}"')
-    print(f"  git tag v{new_version}")
-    print(f"  git push origin main --tags")
+    if success:
+        print(f"\n版本已更新为 {new_version}")
+        print("请记得提交并创建新的 git tag:")
+        print(f"  git add -A")
+        print(f'  git commit -m "chore: bump version to {new_version}"')
+        print(f"  git tag v{new_version}")
+        print(f"  git push origin main --tags")
+    else:
+        print("\n部分文件更新失败，请检查")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
