@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, onMounted } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 import GeoElement from "@/components/ui/GeoElement.vue";
 import GeoLine from "@/components/ui/GeoLine.vue";
 
@@ -6,13 +8,22 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const appInfo = {
+const appInfo = ref({
   name: "KILLSAY",
   version: "1.0.0",
   team: "Hurricane Centre",
   copyright: "Copyright 2025-2026 Hurricane Centre",
   description: "Minecraft 击杀喊话脚本",
-};
+});
+
+onMounted(async () => {
+  try {
+    const version = await invoke<string>("get_app_version");
+    appInfo.value.version = version;
+  } catch (e) {
+    console.error("获取版本号失败:", e);
+  }
+});
 </script>
 
 <template>

@@ -139,6 +139,11 @@ pub fn get_monitor_status(monitor_state: State<'_, Mutex<MonitorState>>) -> Resu
 }
 
 #[tauri::command]
+pub fn get_app_version() -> Result<String, String> {
+    Ok(env!("CARGO_PKG_VERSION").to_string())
+}
+
+#[tauri::command]
 pub async fn toggle_stats_window(app_handle: tauri::AppHandle) -> Result<(), String> {
     use tauri::{WebviewUrl, WebviewWindowBuilder};
     

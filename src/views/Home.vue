@@ -15,6 +15,9 @@ import RingStat from "@/components/ui/RingStat.vue";
 const configStore = useConfigStore();
 const monitorStore = useMonitorStore();
 
+// 应用版本
+const appVersion = ref("1.0.0");
+
 // 表单状态
 const user = ref("");
 const windowName = ref("布吉岛");
@@ -49,7 +52,14 @@ function isCurrentConfig(path: string): boolean {
   return configStore.currentConfigPath === path;
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 获取应用版本
+  try {
+    appVersion.value = await invoke<string>("get_app_version");
+  } catch (e) {
+    console.error("获取版本号失败:", e);
+  }
+  
   // 加载默认值
   if (configStore.defaultUser) {
     user.value = configStore.defaultUser;
@@ -298,7 +308,7 @@ async function toggleStatsWindow() {
           <div class="title-area">
             <h1 class="main-title">
               <span class="title-text">KILLSAY</span>
-              <span class="title-version">v1.0</span>
+              <span class="title-version">v{{ appVersion }}</span>
             </h1>
             <p class="subtitle">MINECRAFT KILL SAY SCRIPT</p>
           </div>

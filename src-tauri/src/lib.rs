@@ -54,6 +54,7 @@ pub fn run() {
             commands::start_monitoring,
             commands::stop_monitoring,
             commands::get_monitor_status,
+            commands::get_app_version,
             updater::check_for_update,
         ])
         .run(tauri::generate_context!())
