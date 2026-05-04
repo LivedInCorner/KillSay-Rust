@@ -145,7 +145,10 @@ fn monitor_loop(
     // 编译正则表达式
     let join_regexes: Vec<Regex> = params.join_patterns
         .iter()
-        .filter_map(|p| Regex::new(p).ok())
+        .filter_map(|p| {
+            let escaped = regex::escape(p).replace(r"%t", "(.+?)");
+            Regex::new(&escaped).ok()
+        })
         .collect();
     
     let kill_regexes: Vec<(Regex, usize, usize)> = params.kill_patterns

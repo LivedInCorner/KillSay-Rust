@@ -144,14 +144,17 @@ async function saveConfig() {
         
         <!-- 加入检测模式 -->
         <div v-if="activeTab === 'patterns'" class="tab-pane">
-          <label class="dg-label">玩家加入游戏检测模式（每行一个正则表达式）</label>
+          <label class="dg-label">玩家加入游戏检测模式（每行一个）</label>
           <textarea
             v-model="patternText"
             class="dg-textarea"
             rows="10"
-            placeholder="输入正则表达式，每行一个"
+            placeholder="输入检测模式，每行一个"
           ></textarea>
-          <p class="help-text">示例: (.+?)加入了游戏</p>
+          <p class="help-text">
+            提示: %t=玩家名称<br/>
+            示例: %t加入了游戏 或 %t joined the game
+          </p>
         </div>
         
         <!-- 反狙击消息 -->

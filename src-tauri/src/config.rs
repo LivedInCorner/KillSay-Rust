@@ -57,11 +57,11 @@ pub struct AppSettings {
         Self {
             sniper_list: vec!["".to_string()],
             join_patterns: vec![
-                "(.+?)加入了游戏".to_string(),
-                "(.+?) 加入了游戏".to_string(),
-                "(.+?) joined the game".to_string(),
-                "(.+?) 加入游戏".to_string(),
-                "(.+?) 进入了游戏".to_string(),
+                "%t加入了游戏".to_string(),
+                "%t 加入了游戏".to_string(),
+                "%t joined the game".to_string(),
+                "%t 加入游戏".to_string(),
+                "%t 进入了游戏".to_string(),
             ],
             anti_snipe_messages: vec!["/PLAY SWRSOLO".to_string()],
             kill_patterns: vec![
