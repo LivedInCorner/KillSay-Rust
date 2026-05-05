@@ -4,10 +4,15 @@ use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
+    #[serde(default)]
     pub sniper_list: Vec<String>,
+    #[serde(default)]
     pub join_patterns: Vec<String>,
+    #[serde(default)]
     pub anti_snipe_messages: Vec<String>,
+    #[serde(default)]
     pub kill_patterns: Vec<String>,
+    #[serde(default)]
     pub kill_messages: Vec<String>,
     #[serde(default)]
     pub message_prefix: String,
