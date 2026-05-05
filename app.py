@@ -544,10 +544,14 @@ class KillSayApp(QtWidgets.QWidget):
         # 加入检测模式标签页
         pattern_tab = QtWidgets.QWidget()
         pattern_layout = QtWidgets.QVBoxLayout(pattern_tab)
-        pattern_layout.addWidget(QtWidgets.QLabel("玩家加入游戏检测模式 (每行一个正则表达式):"))
+        pattern_layout.addWidget(QtWidgets.QLabel("玩家加入游戏检测模式 (每行一个):"))
         self.pattern_text = QtWidgets.QTextEdit()
         self.pattern_text.setPlainText("\n".join(edit_config.get("join_patterns", [])))
         pattern_layout.addWidget(self.pattern_text)
+        
+        pattern_help = QtWidgets.QLabel("提示: %t=玩家名称\n示例: %t加入了游戏 或 %t joined the game")
+        pattern_help.setStyleSheet("font-size: 8pt; color: #bdc3c7;")
+        pattern_layout.addWidget(pattern_help)
         tab_widget.addTab(pattern_tab, "加入检测模式")
         
         # 反狙击消息标签页
@@ -562,12 +566,12 @@ class KillSayApp(QtWidgets.QWidget):
         # 击杀检测模式标签页
         kill_pattern_tab = QtWidgets.QWidget()
         kill_pattern_layout = QtWidgets.QVBoxLayout(kill_pattern_tab)
-        kill_pattern_layout.addWidget(QtWidgets.QLabel("击杀检测模式 (每行一个，使用 {d} 和 {k} 占位符):"))
+        kill_pattern_layout.addWidget(QtWidgets.QLabel("击杀检测模式 (每行一个，使用 %o 和 %u 占位符):"))
         self.kill_pattern_text = QtWidgets.QTextEdit()
         self.kill_pattern_text.setPlainText("\n".join(edit_config.get("kill_patterns", [])))
         kill_pattern_layout.addWidget(self.kill_pattern_text)
         
-        help_label = QtWidgets.QLabel("提示: {d}=被击杀者, {k}=击杀者, ./n=动态数字\n示例: {d}被{k}击败 或 {k}击败了{d}，以及 {d}被{k}击败./n")
+        help_label = QtWidgets.QLabel("提示: %o=对象(被击杀者), %u=用户(击杀者), %n=动态数字\n示例: %o被%u击败 或 %u击败了%o")
         help_label.setStyleSheet("font-size: 8pt; color: #bdc3c7;")
         kill_pattern_layout.addWidget(help_label)
         tab_widget.addTab(kill_pattern_tab, "击杀检测模式")
@@ -575,12 +579,12 @@ class KillSayApp(QtWidgets.QWidget):
         # 击杀消息标签页
         kill_msg_tab = QtWidgets.QWidget()
         kill_msg_layout = QtWidgets.QVBoxLayout(kill_msg_tab)
-        kill_msg_layout.addWidget(QtWidgets.QLabel("击杀后发送的消息 (每行一个，可使用 {k} 和 {d} 占位符):"))
+        kill_msg_layout.addWidget(QtWidgets.QLabel("击杀后发送的消息 (每行一个，可使用 %u 和 %o 占位符):"))
         self.kill_msg_text = QtWidgets.QTextEdit()
         self.kill_msg_text.setPlainText("\n".join(edit_config.get("kill_messages", [])))
         kill_msg_layout.addWidget(self.kill_msg_text)
         
-        help_label2 = QtWidgets.QLabel("提示: {k}=击杀者, {d}=被击杀者\n如果没有占位符，则发送原消息。")
+        help_label2 = QtWidgets.QLabel("提示: %u=用户(击杀者), %o=对象(被击杀者)\n如果没有占位符，则发送原消息。")
         help_label2.setStyleSheet("font-size: 8pt; color: #bdc3c7;")
         kill_msg_layout.addWidget(help_label2)
         tab_widget.addTab(kill_msg_tab, "击杀消息")
@@ -592,7 +596,7 @@ class KillSayApp(QtWidgets.QWidget):
         format_layout.addRow("消息前缀:", self.prefix_edit)
         self.format_edit = QtWidgets.QLineEdit(edit_config.get("killsay_format", ConfigManager.DEFAULT_CONFIG["killsay_format"]))
         format_layout.addRow("Killsay 格式:", self.format_edit)
-        format_help = QtWidgets.QLabel("支持占位符:\n{prefix} - 消息前缀\n{message} - 击杀消息内容\n{k} - 击杀者名称\n{d} - 被击杀者名称\n{kills} - 当前击杀数\n{deaths} - 当前死亡数\n{kd} / {kdr} - 当前K/D\n示例: {prefix}{message} | 当前击杀数：{kills} | K/D：{kdr}")
+        format_help = QtWidgets.QLabel("支持占位符:\n%t - 前缀\n%m - 击杀消息内容\n%u - 用户(击杀者名称)\n%o - 对象(被击杀者名称)\n%c - 当前击杀数\n示例: %t%m | 当前击杀数：%c")
         format_help.setStyleSheet("font-size: 8pt; color: #bdc3c7;")
         format_help.setWordWrap(True)
         format_layout.addRow(format_help)
@@ -921,8 +925,8 @@ class KillSayApp(QtWidgets.QWidget):
             if match:
                 data = match.groups()
                 if len(data) >= 2:
-                    d_index = pattern.find("{d}")
-                    k_index = pattern.find("{k}")
+                    d_index = pattern.find("%o")
+                    k_index = pattern.find("%u")
                     
                     if d_index < k_index:
                         d, k = data[0], data[1]
@@ -948,7 +952,9 @@ class KillSayApp(QtWidgets.QWidget):
     def _process_anti_snipe(self, msg):
         """处理反狙击检测"""
         for pattern in self.join_patterns:
-            match = re.search(pattern, msg)
+            # 将 %t 转换为正则表达式捕获组
+            regex_pattern = re.escape(pattern).replace(r'%t', '(.*?)')
+            match = re.search(regex_pattern, msg)
             if match:
                 player_name = match.group(1).strip()
                 if self.anti_snipe_enabled:
@@ -968,33 +974,28 @@ class KillSayApp(QtWidgets.QWidget):
     def _convert_kill_pattern(self, pattern):
         """转换击杀模式为正则表达式"""
         escaped_pattern = re.escape(pattern)
-        escaped_pattern = escaped_pattern.replace(r'\{d\}', '(.*?)')
-        escaped_pattern = escaped_pattern.replace(r'\{k\}', '(.*?)')
-        escaped_pattern = escaped_pattern.replace(r'\./n', '(\\d+)')
+        escaped_pattern = escaped_pattern.replace(r'%o', '(.*?)')
+        escaped_pattern = escaped_pattern.replace(r'%u', '(.*?)')
+        escaped_pattern = escaped_pattern.replace(r'%n', '(\\d+)')
         return escaped_pattern
     
     def _format_kill_message(self, message, killer, killed):
         """格式化击杀消息"""
         formatted = message
-        if "{k}" in formatted:
-            formatted = formatted.replace("{k}", killer)
-        if "{d}" in formatted:
-            formatted = formatted.replace("{d}", killed)
+        if "%u" in formatted:
+            formatted = formatted.replace("%u", killer)
+        if "%o" in formatted:
+            formatted = formatted.replace("%o", killed)
         return formatted
     
     def _build_killsay_message(self, formatted_message, killer, killed):
         """根据前缀和格式构建最终发送消息"""
         result = self.killsay_format or ConfigManager.DEFAULT_CONFIG["killsay_format"]
-        result = result.replace("{prefix}", self.message_prefix or "")
-        result = result.replace("{message}", formatted_message)
-        result = result.replace("{k}", killer)
-        result = result.replace("{d}", killed)
-        result = result.replace("{kills}", str(self.kills))
-        result = result.replace("{deaths}", str(self.deaths))
-        kdr_value = self.kills / self.deaths if self.deaths != 0 else float(self.kills)
-        result = result.replace("{kd}", f"{kdr_value:.2f}")
-        result = result.replace("{kdr}", f"{kdr_value:.2f}")
-        # 清理可能出现的重复前缀占位符
+        result = result.replace("%t", self.message_prefix or "")
+        result = result.replace("%m", formatted_message)
+        result = result.replace("%u", killer)
+        result = result.replace("%o", killed)
+        result = result.replace("%c", str(self.kills))
         return result.strip()
     
     def _get_random_kill_message(self):

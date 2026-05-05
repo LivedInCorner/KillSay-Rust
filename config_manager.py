@@ -11,22 +11,22 @@ class ConfigManager:
     DEFAULT_CONFIG = {
         "sniper_list": [""],
         "join_patterns": [
-            "(.+?)加入了游戏",
-            "(.+?) 加入了游戏",
-            "(.+?) joined the game",
-            "(.+?) 加入游戏",
-            "(.+?) 进入了游戏"
+            "%t加入了游戏",
+            "%t 加入了游戏",
+            "%t joined the game",
+            "%t 加入游戏",
+            "%t 进入了游戏"
         ],
         "anti_snipe_messages": [
             "/PLAY SWRSOLO"
         ],
         "kill_patterns": [
-            "{d}被{k}击败",
-            "{d}被炸成了粉尘, 幕后黑手是{k}!",
-            "{d}消逝了, 幕后黑手是{k}!",
-            "{d}被{k}用弓箭射穿了",
-            "{d}跑得很快, 但是他还是摔了一跤, 最终被{k}击败了",
-            "{k}击败了{d}"
+            "%o被%u击败",
+            "%o被炸成了粉尘, 幕后黑手是%u!",
+            "%o消逝了, 幕后黑手是%u!",
+            "%o被%u用弓箭射穿了",
+            "%o跑得很快, 但是他还是摔了一跤, 最终被%u击败了",
+            "%u击败了%o"
         ],
         "kill_messages": [
             "黄沙百战穿金甲，不破楼兰终不还。",
@@ -112,7 +112,7 @@ class ConfigManager:
             "伏波惟愿裹尸还，定远何须生入关。"
         ],
         "message_prefix": "",
-        "killsay_format": "{prefix}{message}"
+        "killsay_format": "%t%m"
     }
     
     def __init__(self, config_dir=None):
