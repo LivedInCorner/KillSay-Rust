@@ -15,6 +15,7 @@ import PyQt5.QtCore as QtCore
 import PyQt5.QtGui as QtGui
 from theme_manager import ThemeManager
 from config_manager import ConfigManager
+from share_code import generate_share_code, parse_share_code, import_config_from_share_code, export_config_to_share_code
 from utils import get_base_dir
 
 # ==================== 动画辅助类 ====================
@@ -703,7 +704,7 @@ class KillSayApp(QtWidgets.QWidget):
         """显示配置管理窗口"""
         dialog = QtWidgets.QDialog(self)
         dialog.setWindowTitle("配置管理")
-        dialog.setFixedSize(600, 450)
+        dialog.setFixedSize(600, 500)
         
         layout = QtWidgets.QVBoxLayout(dialog)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -721,32 +722,45 @@ class KillSayApp(QtWidgets.QWidget):
         # 刷新列表
         self._refresh_config_list()
         
-        # 按钮区域
-        button_layout = QtWidgets.QHBoxLayout()
+        # 按钮区域 - 第一行
+        button_layout1 = QtWidgets.QHBoxLayout()
         
         load_btn = QtWidgets.QPushButton("加载")
         load_btn.clicked.connect(self._load_selected_config)
-        button_layout.addWidget(load_btn)
+        button_layout1.addWidget(load_btn)
         
         edit_btn = QtWidgets.QPushButton("编辑")
         edit_btn.clicked.connect(self._edit_selected_config)
-        button_layout.addWidget(edit_btn)
+        button_layout1.addWidget(edit_btn)
         
         delete_btn = QtWidgets.QPushButton("删除")
         delete_btn.setObjectName("danger")
         delete_btn.clicked.connect(self._delete_selected_config)
-        button_layout.addWidget(delete_btn)
+        button_layout1.addWidget(delete_btn)
         
-        button_layout.addStretch()
+        layout.addLayout(button_layout1)
+        
+        # 按钮区域 - 第二行（分享码功能）
+        button_layout2 = QtWidgets.QHBoxLayout()
+        
+        export_btn = QtWidgets.QPushButton("导出分享码")
+        export_btn.clicked.connect(lambda: self._export_share_code(dialog))
+        button_layout2.addWidget(export_btn)
+        
+        import_btn = QtWidgets.QPushButton("导入分享码")
+        import_btn.clicked.connect(lambda: self._import_share_code(dialog))
+        button_layout2.addWidget(import_btn)
+        
+        button_layout2.addStretch()
         
         close_btn = QtWidgets.QPushButton("关闭")
         close_btn.clicked.connect(dialog.reject)
-        button_layout.addWidget(close_btn)
+        button_layout2.addWidget(close_btn)
         
-        layout.addLayout(button_layout)
+        layout.addLayout(button_layout2)
         
         # 说明文字
-        info_label = QtWidgets.QLabel("双击配置可快速加载")
+        info_label = QtWidgets.QLabel("双击配置可快速加载 | 分享码格式: KS1-... (兼容 Rust 版本)")
         info_label.setStyleSheet("font-size: 9pt; color: #7f8c8d;")
         layout.addWidget(info_label)
         
@@ -804,7 +818,88 @@ class KillSayApp(QtWidgets.QWidget):
                     QtWidgets.QMessageBox.information(self, "成功", "配置已删除")
                 else:
                     QtWidgets.QMessageBox.warning(self, "错误", "删除失败")
+    
+    def _export_share_code(self, parent_dialog):
+        """导出当前配置为分享码"""
+        if not self.config_mgr.current_config:
+            QtWidgets.QMessageBox.warning(self, "错误", "没有加载的配置")
+            return
         
+        share_code = export_config_to_share_code(self.config_mgr, include_name=True)
+        if not share_code:
+            QtWidgets.QMessageBox.warning(self, "错误", "导出失败")
+            return
+        
+        # 显示分享码对话框
+        dialog = QtWidgets.QDialog(parent_dialog)
+        dialog.setWindowTitle("导出分享码")
+        dialog.setFixedSize(500, 200)
+        
+        layout = QtWidgets.QVBoxLayout(dialog)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        layout.addWidget(QtWidgets.QLabel("分享码（可复制发送给其他玩家）："))
+        
+        text_edit = QtWidgets.QTextEdit()
+        text_edit.setPlainText(share_code)
+        text_edit.setReadOnly(True)
+        text_edit.setMaximumHeight(80)
+        layout.addWidget(text_edit)
+        
+        button_layout = QtWidgets.QHBoxLayout()
+        
+        copy_btn = QtWidgets.QPushButton("复制到剪贴板")
+        copy_btn.clicked.connect(lambda: QtWidgets.QApplication.clipboard().setText(share_code))
+        copy_btn.clicked.connect(lambda: QtWidgets.QMessageBox.information(dialog, "成功", "已复制到剪贴板"))
+        button_layout.addWidget(copy_btn)
+        
+        close_btn = QtWidgets.QPushButton("关闭")
+        close_btn.clicked.connect(dialog.accept)
+        button_layout.addWidget(close_btn)
+        
+        layout.addLayout(button_layout)
+        dialog.exec_()
+    
+    def _import_share_code(self, parent_dialog):
+        """导入分享码"""
+        dialog = QtWidgets.QDialog(parent_dialog)
+        dialog.setWindowTitle("导入分享码")
+        dialog.setFixedSize(500, 200)
+        
+        layout = QtWidgets.QVBoxLayout(dialog)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        layout.addWidget(QtWidgets.QLabel("粘贴分享码（KS1-...格式，兼容 Rust 版本）："))
+        
+        text_edit = QtWidgets.QTextEdit()
+        text_edit.setPlaceholderText("KS1-...")
+        text_edit.setMaximumHeight(80)
+        layout.addWidget(text_edit)
+        
+        button_layout = QtWidgets.QHBoxLayout()
+        
+        import_btn = QtWidgets.QPushButton("导入")
+        import_btn.clicked.connect(lambda: self._do_import_share_code(dialog, text_edit.toPlainText()))
+        button_layout.addWidget(import_btn)
+        
+        cancel_btn = QtWidgets.QPushButton("取消")
+        cancel_btn.clicked.connect(dialog.reject)
+        button_layout.addWidget(cancel_btn)
+        
+        layout.addLayout(button_layout)
+        dialog.exec_()
+    
+    def _do_import_share_code(self, dialog, code):
+        """执行导入分享码"""
+        success, message = import_config_from_share_code(code, self.config_mgr)
+        
+        if success:
+            QtWidgets.QMessageBox.information(self, "成功", message)
+            self._refresh_config_list()
+            dialog.accept()
+        else:
+            QtWidgets.QMessageBox.warning(self, "错误", message)
+    
     def _update_stats_display(self):
         """更新统计显示"""
         kdr = self.kills / self.deaths if self.deaths != 0 else self.kills
