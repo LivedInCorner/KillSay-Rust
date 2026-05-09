@@ -2,8 +2,9 @@
 import { ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useThemeStore } from "@/stores/theme";
+import { useAppStore } from "@/stores/app";
 
-const props = defineProps<{
+defineProps<{
   chatKey?: string;
 }>();
 
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const themeStore = useThemeStore();
+const appStore = useAppStore();
 const isMaximized = ref(false);
 const isEditingKey = ref(false);
 let clickTimer: ReturnType<typeof setTimeout> | null = null;
@@ -99,7 +101,7 @@ function handleKeyInput(e: Event) {
       </button>
       
       <button class="title-bar__btn theme-btn" @click="emit('toggleTheme')" title="切换主题">
-        <svg v-if="themeStore.isDark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg v-if="appStore.isDarkTheme" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="5" />
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="12" y1="21" x2="12" y2="23" />

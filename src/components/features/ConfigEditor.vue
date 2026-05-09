@@ -18,7 +18,8 @@ const config = ref<Config>({
   kill_patterns: [],
   kill_messages: [],
   message_prefix: "",
-  killsay_format: "{prefix}{message}",
+  killsay_format: "%t%m",
+  chat_key: "t",
 });
 
 // Toast状态
