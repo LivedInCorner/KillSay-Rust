@@ -46,6 +46,7 @@ function generateVariants(hex: string) {
 export const useThemeStore = defineStore("theme", () => {
   const accentColor = ref(DEFAULT_COLOR);
   const variants = ref(generateVariants(DEFAULT_COLOR));
+  const isDarkTheme = ref(true);
   
   // Load saved color from config file
   async function loadSavedColor() {

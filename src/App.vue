@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useConfigStore } from "./stores/config";
 import { useMonitorStore } from "./stores/monitor";
 import { useThemeStore } from "./stores/theme";
+import { useAppStore } from "./stores/app";
 import type { UpdateInfo } from "./types";
 import TitleBar from "./components/layout/TitleBar.vue";
 import Home from "./views/Home.vue";
@@ -16,6 +17,7 @@ import UpdateWindow from "./views/UpdateWindow.vue";
 const configStore = useConfigStore();
 const monitorStore = useMonitorStore();
 const themeStore = useThemeStore();
+const appStore = useAppStore();
 const showSettings = ref(false);
 const showColorPicker = ref(false);
 const showShare = ref(false);
@@ -56,6 +58,8 @@ onMounted(async () => {
     await configStore.fetchCurrentConfig();
     await configStore.fetchConfigList();
     await configStore.fetchSettings();
+    await appStore.loadChatKey();
+    appStore.loadTheme();
     
     // Check for updates if auto-update is enabled
     const autoUpdate = localStorage.getItem("killsay-auto-update");
@@ -81,10 +85,13 @@ onUnmounted(() => {
   <div v-else class="app-container">
     <!-- 自定义标题栏 -->
     <TitleBar 
+      :chat-key="appStore.chatKey"
       @open-settings="showSettings = true" 
       @open-color-picker="showColorPicker = true"
       @open-share="showShare = true"
       @open-update="showUpdateWindow = true"
+      @toggle-theme="appStore.toggleTheme()"
+      @update-chat-key="(k) => appStore.setChatKey(k)"
     />
     
     <!-- 背景网格 -->

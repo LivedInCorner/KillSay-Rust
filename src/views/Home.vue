@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useConfigStore } from "@/stores/config";
 import { useMonitorStore } from "@/stores/monitor";
+import { useAppStore } from "@/stores/app";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { MonitorParams } from "@/types";
 import ConfigEditor from "@/components/features/ConfigEditor.vue";
@@ -14,6 +15,7 @@ import RingStat from "@/components/ui/RingStat.vue";
 
 const configStore = useConfigStore();
 const monitorStore = useMonitorStore();
+const appStore = useAppStore();
 
 // 应用版本
 const appVersion = ref("1.0.0");
@@ -23,8 +25,6 @@ const user = ref("");
 const windowName = ref("布吉岛");
 const logFilePath = ref("D:\\MCLDownload\\Game\\.minecraft\\logs\\latest.log");
 const antiSnipeEnabled = ref(false);
-const chatKey = ref("t");
-const showChatKeyInput = ref(false);
 
 // UI状态
 const showConfigEditor = ref(false);
@@ -68,9 +68,6 @@ onMounted(async () => {
   }
   if (configStore.defaultPath) {
     logFilePath.value = configStore.defaultPath;
-  }
-  if (configStore.currentConfig?.chat_key) {
-    chatKey.value = configStore.currentConfig.chat_key;
   }
 });
 
@@ -122,7 +119,7 @@ async function toggleMonitoring() {
       window_name: windowName.value,
       log_file_path: logFilePath.value,
       ...configStore.currentConfig,
-      chat_key: chatKey.value,
+      chat_key: appStore.chatKey,
       anti_snipe_enabled: antiSnipeEnabled.value,
     };
     
@@ -446,27 +443,6 @@ async function toggleStatsWindow() {
                 检测到: {{ monitorStore.antiSnipePlayer }}
               </span>
             </Transition>
-          </div>
-          
-          <!-- 聊天按键设置 -->
-          <div class="chat-key-setting">
-            <div class="setting-row">
-              <label class="dg-label">
-                <GeoElement type="hexagon" :size="8" color="var(--accent-yellow)" :opacity="0.6" />
-                打开输入框按键
-              </label>
-              <div class="key-input-wrapper">
-                <input
-                  v-model="chatKey"
-                  class="dg-input key-input"
-                  maxlength="10"
-                  placeholder="t"
-                  @focus="showChatKeyInput = true"
-                  @blur="showChatKeyInput = false"
-                />
-                <span class="key-hint">默认: t</span>
-              </div>
-            </div>
           </div>
           
           <!-- 监控按钮 -->
@@ -1218,36 +1194,6 @@ async function toggleStatsWindow() {
   font-size: 12px;
   color: var(--accent-yellow);
   animation: pulse 1s infinite;
-}
-
-/* 聊天按键设置 */
-.chat-key-setting {
-  margin-top: var(--spacing-sm);
-}
-
-.setting-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.key-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.key-input {
-  width: 80px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.key-hint {
-  font-size: 11px;
-  color: var(--text-secondary);
 }
 
 /* 监控按钮 */

@@ -3,15 +3,22 @@ import { ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useThemeStore } from "@/stores/theme";
 
+const props = defineProps<{
+  chatKey?: string;
+}>();
+
 const emit = defineEmits<{
   openSettings: [];
   openColorPicker: [];
   openShare: [];
   openUpdate: [];
+  toggleTheme: [];
+  updateChatKey: [key: string];
 }>();
 
 const themeStore = useThemeStore();
 const isMaximized = ref(false);
+const isEditingKey = ref(false);
 let clickTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function minimizeWindow() {
@@ -38,6 +45,11 @@ function handleTitleClick() {
     }, 300);
   }
 }
+
+function handleKeyInput(e: Event) {
+  const input = e.target as HTMLInputElement;
+  emit("updateChatKey", input.value || "t");
+}
 </script>
 
 <template>
@@ -46,6 +58,24 @@ function handleTitleClick() {
     <div class="title-bar__left" @click="handleTitleClick">
       <img src="/icons/icon.svg" alt="KILLSAY" class="title-bar__icon" />
       <span class="title-bar__title">KILLSAY</span>
+    </div>
+    
+    <!-- 中间聊天按键 -->
+    <div class="title-bar__center">
+      <div class="chat-key-badge" @click="isEditingKey = true">
+        <span class="key-label">聊天键:</span>
+        <input
+          v-if="isEditingKey"
+          :value="chatKey || 't'"
+          class="key-input"
+          maxlength="5"
+          @blur="isEditingKey = false"
+          @keyup.enter="isEditingKey = false"
+          @input="handleKeyInput"
+          autofocus
+        />
+        <span v-else class="key-value">{{ chatKey || 'T' }}</span>
+      </div>
     </div>
     
     <!-- 右侧控制按钮 -->
@@ -68,7 +98,24 @@ function handleTitleClick() {
         </svg>
       </button>
       
-      <button class="title-bar__btn theme-btn" @click="emit('openColorPicker')" title="主题色">
+      <button class="title-bar__btn theme-btn" @click="emit('toggleTheme')" title="切换主题">
+        <svg v-if="themeStore.isDark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+      
+      <button class="title-bar__btn color-btn" @click="emit('openColorPicker')" title="主题色">
         <div class="theme-color-dot" :style="{ backgroundColor: themeStore.accentColor }"></div>
       </button>
       
@@ -132,6 +179,60 @@ function handleTitleClick() {
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 2px;
+}
+
+.title-bar__center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.chat-key-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-key-badge:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-yellow);
+}
+
+.key-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.key-value {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--accent-yellow);
+  text-transform: uppercase;
+  min-width: 16px;
+  text-align: center;
+}
+
+.key-input {
+  width: 24px;
+  height: 18px;
+  background: transparent;
+  border: 1px solid var(--accent-yellow);
+  border-radius: 3px;
+  color: var(--accent-yellow);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+  padding: 0;
 }
 
 .title-bar__right {
