@@ -154,7 +154,7 @@ function handleKeyInput(e: Event) {
   justify-content: space-between;
   height: 36px;
   padding: 0 12px;
-  background: rgba(10, 10, 18, 0.95);
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
   user-select: none;
   position: relative;
@@ -256,7 +256,7 @@ function handleKeyInput(e: Event) {
 }
 
 .title-bar__btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--hover-bg);
   color: var(--text-primary);
 }
 

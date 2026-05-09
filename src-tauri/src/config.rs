@@ -82,6 +82,13 @@ pub struct AppSettings {
                 "%o被%u用弓箭射穿了".to_string(),
                 "%o跑得很快, 但是他还是摔了一跤, 最终被%u击败了".to_string(),
                 "%u击败了%o".to_string(),
+                "胜者: %u".to_string(),
+                "%o被%u击败".to_string(),
+                "%o被炸成了粉尘，最终还是被%u击败!".to_string(),
+                "%o消逝了，最终还是被%u击败!".to_string(),
+                "%o被%u用弓箭射穿了".to_string(),
+                "%o跑得很快，但是他还是摔了一跤，最终被%u击败!".to_string(),
+                "%o与虚空娘在异世界相遇，最终还是被%u击败!".to_string(),
             ],
             kill_messages: vec![
                 "黄沙百战穿金甲，不破楼兰终不还。".to_string(),

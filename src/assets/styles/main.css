@@ -5,6 +5,7 @@
   /* 主色系 */
   --bg-primary: #1A1D22;
   --bg-panel: #272B33;
+  --bg-secondary: #1E2128;
   --border-light: #3A3F48;
   --text-primary: #E5E7EB;
   --text-secondary: #9CA3AF;
@@ -16,6 +17,7 @@
   /* 辅助科技色 */
   --accent-blue: #60A5FA;
   --accent-red: #EF4444;
+  --accent-green: #22c55e;
   
   /* 圆角 */
   --radius-panel: 8px;
@@ -37,6 +39,14 @@
   --glass-border: rgba(249, 211, 66, 0.15);
   --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   --glass-blur: blur(16px);
+  
+  /* 阴影 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  
+  /* 输入框 */
+  --input-bg: #1E2128;
+  --hover-bg: rgba(255, 255, 255, 0.05);
   
   /* 高亮效果 */
   --highlight-border: 1px solid #F9D342;
@@ -207,7 +217,7 @@ body {
   font-size: 14px;
   font-family: var(--font-main);
   color: var(--text-primary);
-  background: var(--bg-panel);
+  background: var(--input-bg);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-small);
   outline: none;
@@ -231,7 +241,7 @@ body {
   font-size: 14px;
   font-family: var(--font-mono);
   color: var(--text-primary);
-  background: var(--bg-panel);
+  background: var(--input-bg);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-small);
   outline: none;
