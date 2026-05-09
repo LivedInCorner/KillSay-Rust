@@ -7,6 +7,7 @@ export interface Config {
   kill_messages: string[];
   message_prefix: string;
   killsay_format: string;
+  chat_key: string;
 }
 
 export interface ConfigInfo {
@@ -48,6 +49,7 @@ export interface MonitorParams {
   anti_snipe_enabled: boolean;
   message_prefix: string;
   killsay_format: string;
+  chat_key: string;
 }
 
 export interface MonitorStatus {

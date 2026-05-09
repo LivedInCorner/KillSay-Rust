@@ -22,10 +22,16 @@ pub struct MonitorParams {
     pub message_prefix: String,
     #[serde(default = "default_killsay_format")]
     pub killsay_format: String,
+    #[serde(default = "default_chat_key")]
+    pub chat_key: String,
 }
 
 fn default_killsay_format() -> String {
     "%t%m".to_string()
+}
+
+fn default_chat_key() -> String {
+    "t".to_string()
 }
 
 #[derive(Debug, Clone, Serialize)]
